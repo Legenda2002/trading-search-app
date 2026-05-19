@@ -12,6 +12,8 @@
 
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_all
+
 block_cipher = None
 
 SPEC_DIR = Path(SPECPATH).resolve()
@@ -23,18 +25,34 @@ extra_datas = []
 if HF_CACHE_SRC.is_dir():
     extra_datas.append((str(HF_CACHE_SRC), "resources/hf_cache"))
 
+# Force PyInstaller to grab every binary + data + submodule of native-extension
+# packages. Without this, NumPy 2.x's `_core/_multiarray_umath` .pyd can end up
+# missing, breaking the bundle with "Importing the numpy C-extensions failed".
+_bundled_datas = list(extra_datas)
+_bundled_binaries = []
+_bundled_hiddenimports = [
+    "PIL._tkinter_finder",
+    "transformers.models.dinov2",
+    "transformers.models.dinov2.modeling_dinov2",
+    "transformers.image_processing_utils_fast",
+]
+
+for pkg in ("numpy", "cv2", "torch", "transformers", "PIL"):
+    try:
+        d, b, h = collect_all(pkg)
+    except Exception:
+        continue
+    _bundled_datas += d
+    _bundled_binaries += b
+    _bundled_hiddenimports += h
+
 
 a = Analysis(
     [str(PROJECT_ROOT / "app" / "main.py")],
     pathex=[str(PROJECT_ROOT)],
-    binaries=[],
-    datas=extra_datas,
-    hiddenimports=[
-        "PIL._tkinter_finder",
-        "transformers.models.dinov2",
-        "transformers.models.dinov2.modeling_dinov2",
-        "transformers.image_processing_utils_fast",
-    ],
+    binaries=_bundled_binaries,
+    datas=_bundled_datas,
+    hiddenimports=_bundled_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

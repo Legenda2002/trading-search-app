@@ -1,6 +1,6 @@
 PySide6
 opencv-python
-numpy
+numpy>=1.26,<2
 Pillow
 
 # Phase 2A: hybrid DINOv2 + ORB search
