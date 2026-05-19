@@ -1,0 +1,55 @@
+# --- Python ---
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editors / IDEs ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# --- App runtime data (heavy, regenerable) ---
+# The whole data/ folder is excluded — it holds the SQLite index, indexed
+# image copies, thumbnails, ORB descriptors, DINOv2 embeddings and the HF
+# model cache. Everything in there is rebuilt by the indexer + the
+# build_embeddings.py script, so we never commit it.
+data/
+
+# Pasted clipboard scratch files in /tmp also accidentally land here on
+# some setups — make sure they never get committed.
+trading_search_paste.png
+
+# --- Sample charts (too big for git, keep folder placeholders) ---
+samples/library/**/*.png
+samples/library/**/*.jpg
+samples/library/**/*.jpeg
+samples/library/**/*.bmp
+samples/library/**/*.webp
+samples/query/**/*.png
+samples/query/**/*.jpg
+samples/query/**/*.jpeg
+samples/query/**/*.bmp
+samples/query/**/*.webp
+!samples/library/.gitkeep
+!samples/query/.gitkeep
+
+# --- Build / packaging artifacts ---
+build/
+dist/
+build-venv/
+*.spec.bak
+
+# --- pip caches we created during torch installs ---
+.pip-cache/
+.pip-tmp/
+
+# --- Reports / scratch outputs ---
+reports/

@@ -1,0 +1,79 @@
+name: build-windows
+
+# Builds a standalone Windows .exe of TradingSearch.
+#
+# Triggered manually from the "Actions" tab (workflow_dispatch) or by pushing
+# a Git tag like v0.1.0. The finished ZIP is attached as a workflow artifact
+# (always) and, for tag pushes, also published as a GitHub Release asset that
+# you can send the client as a direct download link.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Cache HuggingFace weights
+        uses: actions/cache@v4
+        with:
+          path: data\hf_cache
+          key: hf-cache-dinov2-small
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple -r requirements.txt
+          pip install pyinstaller==6.10
+
+      - name: Pre-download DINOv2 weights
+        run: |
+          python -c "from app.vision.embedding_extractor import EmbeddingExtractor; EmbeddingExtractor().warmup(); print('ok')"
+
+      - name: Build executable
+        run: pyinstaller --noconfirm --clean packaging\trading_search.spec
+
+      - name: Copy Russian readme into bundle
+        run: |
+          if (Test-Path packaging\HOW_TO_RUN_RUSSIAN.txt) {
+            Copy-Item packaging\HOW_TO_RUN_RUSSIAN.txt dist\TradingSearch\
+          }
+
+      - name: Compress to ZIP
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF -replace 'refs/tags/', '' } else { 'dev' }
+          Compress-Archive -Path dist\TradingSearch\* -DestinationPath "TradingSearch-windows-$version.zip"
+          echo "ZIP_NAME=TradingSearch-windows-$version.zip" >> $env:GITHUB_ENV
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TradingSearch-windows
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 30
+
+      - name: Publish as GitHub Release (only on tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true

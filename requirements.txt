@@ -1,0 +1,14 @@
+PySide6
+opencv-python
+numpy
+Pillow
+
+# Phase 2A: hybrid DINOv2 + ORB search
+# Install torch from the CPU index to avoid pulling the multi-GB CUDA wheels:
+#   pip install --index-url https://download.pytorch.org/whl/cpu \
+#               --extra-index-url https://pypi.org/simple \
+#               torch transformers safetensors huggingface_hub
+torch
+transformers
+safetensors
+huggingface_hub
