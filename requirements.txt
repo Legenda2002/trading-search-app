@@ -9,6 +9,7 @@ Pillow
 #               --extra-index-url https://pypi.org/simple \
 #               torch transformers safetensors huggingface_hub
 torch
+torchvision
 transformers
 safetensors
 huggingface_hub
